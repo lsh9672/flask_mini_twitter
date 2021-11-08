@@ -80,6 +80,7 @@ def create_app(test_config = None):
 
         return 'tweet add success',200
 
+
     return app
 
 
@@ -87,46 +88,4 @@ def create_app(test_config = None):
 
 
 
-# #팔로우 기능
-# @app.route("/follow", mehtods=["POST"])
-# def follow():
 
-#     payload = request.json
-#     user_id = int(payload['id'])
-#     user_id_to_follow = int(payload['follow'])
-
-#     if user_id not in app.users or user_id_to_follow not in app.users:
-#         return 'not found user',400
-    
-#     user = app.users[user_id]
-#     user.setdefault('follow',set()).add(user_id_to_follow)
-
-#     return jsonify(user)
-
-# #언팔로우 기능
-# @app.route("/unfollow", methods = ["POST"])
-# def unfollow():
-#     payload = request.json
-#     user_id = int(payload["id"])
-#     user_id_to_unfollow = int(payload["unfollow"])
-
-#     if user_id not in app.users or user_id_to_unfollow not in app.users:
-#         return 'not found user', 400
-
-#     user = app.users[user_id]
-#     user.setdefault('follow',set()).discard(user_id_to_unfollow)
-
-#     return jsonify(user)
-
-# #타임라인 기능
-
-# @app.route('/timeline/<int:user_id>',methods=["GET"])
-# def timeline(user_id):
-#     if user_id not in app.users:
-#         return 'not found user', 400
-
-#     follow_list = app.users[user_id].get('follow',set())
-#     follow_list.add(user_id)
-#     timeline = [tweet for tweet in app.tweets if tweet['user_id'] in follow_list]
-
-#     return jsonify({'user_id':user_id,'timeline':timeline})
