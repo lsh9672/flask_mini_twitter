@@ -1,10 +1,50 @@
 from flask import Flask,jsonify,request,current_app
+import sqlalchemy
 from JsonEncoding import CustomJSONEncoder  
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,or_
 from sqlalchemy.orm import session, sessionmaker
 from models.model import User,Tweet,UsersFollowList
+import json
 
+#유저 정보 가져오기
+def get_user(user_id):
+    Session = sessionmaker(bind=current_app.database)
+    session = Session()
 
+    user_info = session.query(User.id,User.name,User.email,User.profile).filter(User.id==user_id).first()
+    
+    session.close()
+    if user_info:
+        return {
+            "id":user_info[0],
+            "name":user_info[1],
+            "email":user_info[2],
+            "profile":user_info[3]
+        }
+    else:
+        return None
+
+#유저 생성하는 함수(인자 - dict)
+def insert_user(new_user):
+    
+    new_user_id = ""
+    Session = sessionmaker(bind=current_app.database)
+    session = Session()
+    #new user data insert
+    
+    user_info = User(name=new_user['name'],email=new_user['email'],profile=new_user['profile'],hashed_password=new_user['password'])
+    session.add(user_info)
+    session.commit()
+
+    new_user_id = user_info.id
+
+    #new user data select
+    session.close()
+    if new_user_id:
+        return new_user_id
+    else:
+        return None
+    
 def create_app(test_config = None):
     app = Flask(__name__)
 
@@ -27,35 +67,10 @@ def create_app(test_config = None):
     def sign_up():
         new_user = request.json
 
-        Session = sessionmaker(bind=app.database)
-        new_user_id = ""
+        insert_result_id = insert_user(new_user)
+        created_user = get_user(insert_result_id)
 
-        #new user data insert
-        session = Session()
-        
-        user_info = User(name=new_user['name'],email=new_user['email'],profile=new_user['profile'],hashed_password=new_user['password'])
-        session.add(user_info)
-        session.commit()
-        new_user_id = user_info.id
-        print(new_user_id)
-
-        #new user data select
-        row = session.query(User.id,User.name,User.email,User.profile).filter(User.id==new_user_id).first()
-        print("check",row)
-
-        if row is not None:
-            created_user={
-                'id':row[0],
-                'name':row[1],
-                'email':row[2],
-                'profile':row[3]
-            }
-        else:
-            created_user=None
-        
-        session.close()
-
-        return jsonify(created_user)
+        return json.dumps(created_user)
 
     # 300자 이내의 트윗 올리기
     # {"id":1,
@@ -79,6 +94,20 @@ def create_app(test_config = None):
         session.close()
 
         return 'tweet add success',200
+
+    @app.route("/timeline/<int:user_id>",methods=['GET'])
+    def timeline(user_id):
+        Session = sessionmaker(bind = app.database)
+        session = Session()
+
+
+        rows = session.query(Tweet.user_id,Tweet.tweet).outerjoin(UsersFollowList,UsersFollowList.user_id==user_id).filter(or_(Tweet.user_id==user_id,Tweet.user_id==UsersFollowList.follow_user_id)).all()
+        
+        timeline=list()
+        for row in rows:
+            timeline.append({'user_id':row[0],'tweet':row[1]})
+
+        return json.dumps(timeline)
 
 
     return app
