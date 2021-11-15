@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,request,current_app
+from flask import Flask,jsonify,request,current_app,Response
 import sqlalchemy
 from JsonEncoding import CustomJSONEncoder  
 from sqlalchemy import create_engine,or_
@@ -44,7 +44,61 @@ def insert_user(new_user):
         return new_user_id
     else:
         return None
+
+#트윗을 입력받아서 디비에 넣는 함수
+def insert_tweet(user_tweet):
+    Session = sessionmaker(bind=current_app.database)
+    session = Session()
+    try:
+        tweet = Tweet(user_id = user_tweet['id'], tweet = user_tweet['tweet'])
+        session.add(tweet)
+        session.commit()
+        session.close()
+    except:
+        return "error"
+    return "success"
     
+#팔로우 추가하는 함수
+def insert_follow(user_follow):
+    Session = sessionmaker(bind = current_app.database)
+    session = Session()
+    try:
+        follow_info = UsersFollowList(user_id=user_follow['id'],follow_user_id = user_follow['follow'])
+        session.add(follow_info)
+        session.commit()
+        session.close()
+    except:
+        return "error"
+    return "success"
+
+#팔로우 추가하는 함수
+def insert_unfollow(user_unfollow):
+    Session = sessionmaker(bind = current_app.database)
+    session = Session()
+    try:
+        unfollow_info = session.query(UsersFollowList).filter(UsersFollowList.user_id == user_unfollow['id'],UsersFollowList.follow_user_id == user_unfollow['unfollow']).first()
+        session.delete(unfollow_info)
+        session.commit()
+        session.close()
+    except:
+        return "error"
+    return "success"
+
+#타임라인 가져오는 함수
+def get_timeline(user_id):
+    Session = sessionmaker(bind=current_app.database)
+    session = Session()
+    try:
+        rows = session.query(Tweet.user_id,Tweet.tweet).outerjoin(UsersFollowList,UsersFollowList.user_id==user_id).filter(or_(Tweet.user_id==user_id,Tweet.user_id==UsersFollowList.follow_user_id)).all()
+        
+        timeline=list()
+        for row in rows:
+            timeline.append({'user_id':row[0],'tweet':row[1]})
+    except:
+        return "error"
+
+    return timeline
+
 def create_app(test_config = None):
     app = Flask(__name__)
 
@@ -84,31 +138,43 @@ def create_app(test_config = None):
         if len(tweet) > 300:
             return 'tweet length 300 over', 400
 
-        Session = sessionmaker(bind = app.database)
-        session = Session()
-        
-        tweet_content = Tweet(user_id=int(user_tweet['id']),tweet=user_tweet['tweet'])
-        session.add(tweet_content)
-        session.commit()
-        
-        session.close()
+        insert_result = insert_tweet(user_tweet)
+        if insert_result == "error":
+            return Response(status=400)
 
         return 'tweet add success',200
 
+    #팔로우 추가하는 엔드포인트
+    @app.route("/follow",methods=["POST"])
+    def follow():
+        payload = request.json
+
+        insert_result = insert_follow(payload)
+        if insert_result == "error":
+            return Response(status=400)
+
+        return 'follow add success',200
+
+    #팔로우 추가하는 엔드포인트
+    @app.route("/unfollow",methods=["POST"])
+    def unfollow():
+        payload = request.json
+
+        delete_result = insert_unfollow(payload)
+        if delete_result == "error":
+            return Response(status=400)
+
+        return 'unfollow success',200
+    
+    #타임라인 조회
     @app.route("/timeline/<int:user_id>",methods=['GET'])
     def timeline(user_id):
-        Session = sessionmaker(bind = app.database)
-        session = Session()
 
+        timeline_result = get_timeline(user_id)
+        if timeline_result == "error":
+            return Response(status=400)
 
-        rows = session.query(Tweet.user_id,Tweet.tweet).outerjoin(UsersFollowList,UsersFollowList.user_id==user_id).filter(or_(Tweet.user_id==user_id,Tweet.user_id==UsersFollowList.follow_user_id)).all()
-        
-        timeline=list()
-        for row in rows:
-            timeline.append({'user_id':row[0],'tweet':row[1]})
-
-        return json.dumps(timeline)
-
+        return json.dumps(timeline_result)
 
     return app
 
