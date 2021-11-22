@@ -76,9 +76,9 @@ def insert_tweet(user_tweet):
         tweet = Tweet(user_id = user_tweet['id'], tweet = user_tweet['tweet'])
         session.add(tweet)
         session.commit()
-        session.close()
     except:
         return "error"
+    session.close()
     return "success"
     
 #팔로우 추가하는 함수
@@ -89,9 +89,9 @@ def insert_follow(user_follow):
         follow_info = UsersFollowList(user_id=user_follow['id'],follow_user_id = user_follow['follow'])
         session.add(follow_info)
         session.commit()
-        session.close()
     except:
         return "error"
+    session.close()
     return "success"
 
 #팔로우 추가하는 함수
@@ -102,9 +102,9 @@ def insert_unfollow(user_unfollow):
         unfollow_info = session.query(UsersFollowList).filter(UsersFollowList.user_id == user_unfollow['id'],UsersFollowList.follow_user_id == user_unfollow['unfollow']).first()
         session.delete(unfollow_info)
         session.commit()
-        session.close()
     except:
         return "error"
+    session.close()
     return "success"
 
 #타임라인 가져오는 함수
@@ -119,6 +119,8 @@ def get_timeline(user_id):
             timeline.append({'user_id':row[0],'tweet':row[1]})
     except:
         return "error"
+
+    session.close()
 
     return timeline
 
@@ -200,7 +202,6 @@ def create_app(test_config = None):
                     "exp":datetime.utcnow()+timedelta(seconds=60*60*24)
                 }
                 token = jwt.encode(payload,app.config['JWT_SECRET_KEY'],'HS256')
-                print(token)
                 return json.dumps({
                     "access_token":token
                 })
@@ -263,6 +264,19 @@ def create_app(test_config = None):
             return Response(status=400)
 
         return json.dumps(timeline_result)
+
+    @app.route("/timeline2/<int:user_id>",methods=['GET'])
+    @login_required
+    def timeline2(user_id):
+        timeline_result = get_timeline(user_id)
+        if timeline_result == "error":
+            return Response(status=400)
+
+        result_json = {
+            "user_id":user_id,
+            "timeline":timeline_result
+        }
+        return json.dumps(result_json)
 
     return app
 
