@@ -69,3 +69,4 @@
 - #### aws 1차 배포
   1. v 0.5 까지 진행한 것을 aws에 배포함
   2. EC2 2개, RDS, ELB를 이용하여 구성하였고, ELB의 경우 가중치를 두 EC2에 반반씩 할당함.
+  ![flask_miniter_ver1](https://user-images.githubusercontent.com/56991244/144227387-c161d898-98f9-4a51-a6bb-b7d178d03c5f.png)
