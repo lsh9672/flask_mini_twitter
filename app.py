@@ -30,11 +30,11 @@ def create_app(test_config = None):
     tweet_dao = TweetDao(database)
 
     #Business Layer
-    services = Services
-    services.user_service = UserService(user_dao,app.config)
-    services.tweet_service = TweetService(tweet_dao)
+    service = Services
+    service.user_service = UserService(user_dao,app.config)
+    service.tweet_service = TweetService(tweet_dao)
 
     ##엔드포인트들 생성
-    create_endpoints(app,services)
+    create_endpoints(app,service)
 
     return app

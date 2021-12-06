@@ -25,7 +25,7 @@ class UserService:
         email = credential['email']
         password = credential['password']
 
-        #디비에 접속하는 로직 - 이메일과 해쉬화 된 비밀번호가 리턴됨
+        #디비에 접속하는 로직 - id과 해쉬화 된 비밀번호가 리턴됨
         user_credential= self.user_dao.get_user_id_passwd(email)
 
         #디비조회시 없으면 None이 리턴되어서 and를 했을때 None이 들어감
