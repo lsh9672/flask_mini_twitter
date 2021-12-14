@@ -98,3 +98,6 @@
 
   1. 파일저장을 위해서 aws의 s3를 이용함
   2. s3에 파일을 저장하도록 하고, 이미지를 다운로드하는 엔드포인트 호출시에는 해당 s3의 경로를 전달하여 이미지를 s3로 부터 바로 다운받을수 있도록 함.
+
+
+  ![flask_mini_twitter](https://user-images.githubusercontent.com/56991244/145990215-60716400-9a1e-4364-841e-29b6ff05f1af.png)
