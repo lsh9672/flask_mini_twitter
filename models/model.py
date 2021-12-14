@@ -15,8 +15,9 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True)
     hashed_password = Column(String(255), nullable=False)
     profile = Column(String(2000), nullable=False)
+    profile_picture = Column(String(255), nullable=True)
     crated_at = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(TIMESTAMP, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=True)
 
 
 class Tweet(Base):

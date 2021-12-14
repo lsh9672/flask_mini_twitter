@@ -203,3 +203,19 @@ def test_timeline(user_dao,tweet_dao):
         }
     ]
 
+#이미지 저장과 불러오기 테스트
+def test_save_get_profile_picture(user_dao):
+    #이미지를 읽어온다. - 처음에는 이미지가 없어서 None이 나옴
+    user_id = 1
+    user_profile_picture = user_dao.get_profile_picture(user_id)
+    assert user_profile_picture is None
+
+    #이미지를 저장한다
+    expected_profile_picture = "http://miniter-api-bucket.s3.amazonaws.com/flask_miniter_ver1.png"
+    user_dao.save_profile_picture(expected_profile_picture,user_id)
+
+    #url읽어 들이기
+    actual_profile_picture = user_dao.get_profile_picture(user_id)
+    assert expected_profile_picture == actual_profile_picture
+
+

@@ -6,12 +6,19 @@ import config
 import pytest
 import json
 import bcrypt
+from unittest import mock
+import io
+import boto3
 
 
 database = create_engine(config.test_config['DB_URL'],encoding = 'utf-8',max_overflow = 0)
 
 @pytest.fixture
-def api():
+@mock.patch("app.boto3")
+def api(mock_boto3):
+
+    mock_boto3.client.return_value = mock.Mock()
+
     app = create_app(config.test_config)
     app.config['TEST'] = True
     api=app.test_client()
@@ -184,3 +191,21 @@ def test_unfollow(api):
         'user_id':1,
         'timeline':[]
     }
+
+def test_save_get_profile_picture(api):
+    #인증이 필요한 엔드포인트이므로 로그인을 함
+    resp = api.post('login', data = json.dumps({"email":"asdf1@asdf.com","password":"test passwd"}),content_type = 'application/json')
+
+    resp_json = json.loads(resp.data.decode('utf-8'))
+    access_token = resp_json['access_token']
+
+    #이미지 파일 업로드
+    resp = api.post('/profile-picture', content_type = "multipart/form-data", headers =  {'Authorization': access_token}, data = {'profile_picture':(io.BytesIO(b"some image here"),"profile.png")})
+
+    assert resp.status_code == 200
+
+    #이미지 가져오기
+    resp = api.get('/profile-picture-get/1')
+    data = json.loads(resp.data.decode('utf-8'))
+
+    assert data['img_url'] == f"{config.test_config['S3_BUCKET_URL']}profile.png"

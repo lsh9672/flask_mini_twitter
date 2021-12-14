@@ -1,5 +1,6 @@
 import json
-from flask import Flask,request,g,Response,current_app
+from flask import Flask,request,g,Response,current_app,send_file
+from werkzeug.utils import secure_filename
 from JsonEncoding import CustomJSONEncoder
 from functools import wraps
 import jwt
@@ -144,3 +145,40 @@ def create_endpoints(app,service):
         }
 
         return json.dumps(return_result)
+
+    #프로파일 이미지 저장
+    @app.route('/profile-picture',methods=['POST'])
+    @login_required
+    def upload_profile_picture():
+        user_id = g.user_id
+
+        if 'profile_picture' not in request.files:
+            return 'File is missing', 404
+
+        profile_picture = request.files['profile_picture']
+        print(profile_picture)
+        print(f"type: {type(profile_picture)}")
+
+        if profile_picture.filename == '':
+            return 'Filename is missing',404
+
+        filename = secure_filename(profile_picture.filename)
+        
+        temp = user_service.save_profile_picture(profile_picture,filename,user_id)
+
+        return str(temp),200
+
+    #프로파일 이미지 불러오기 - 누구든 볼수 있어야 하므로 인증은 뺸다.
+    #불러오고자 하는 유저 id를 url에 넣어서 보낸다.
+    @app.route('/profile-picture-get/<int:user_id>', methods=['GET'])
+    def get_profile_picture(user_id):
+        #이미지 경로를 가져옴
+        profile_picture = user_service.get_profile_picture(user_id)
+
+        if profile_picture is not None:
+            # return send_file(profile_picture)
+            return json.dumps({"img_url":profile_picture})
+
+        else:
+            return 'not fount file',404
+

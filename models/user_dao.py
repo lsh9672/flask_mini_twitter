@@ -1,3 +1,4 @@
+from re import L
 from sqlalchemy.orm import session, sessionmaker
 from .model import User,Tweet,UsersFollowList
 
@@ -76,4 +77,38 @@ class UserDao:
 
         session.close()
         return "success"
-        
+    
+    #디비에 프로파일 이미지 경로 저장
+    def save_profile_picture(self,profile_picture_path,user_id):
+        Session = sessionmaker(bind = self.db)
+        session = Session()
+
+        try:
+            update_info = session.query(User).filter(User.id == user_id).update({'profile_picture':profile_picture_path})
+            session.commit()
+        except:
+            session.close()
+            return None
+
+        session.commit()
+        return update_info
+
+    #디비에서 경로를 가져와서 리턴
+    def get_profile_picture(self,user_id):
+
+        Session = sessionmaker(bind=self.db)
+        session = Session()
+
+        try:
+            image_path = session.query(User.profile_picture).filter(User.id == user_id).first()
+        except:
+            session.close()
+            return None
+
+        session.close()
+
+        if image_path is not None: 
+            return image_path[0]
+            
+        else: 
+            None

@@ -5,6 +5,7 @@ import config
 from models import TweetDao,UserDao
 from service import TweetService,UserService
 from view import create_endpoints
+import boto3
 
 
 #service클래스들을 담고 있을 클래스
@@ -30,8 +31,11 @@ def create_app(test_config = None):
     tweet_dao = TweetDao(database)
 
     #Business Layer
+
+    s3_client = boto3.client("s3",aws_access_key_id = app.config['S3_ACCESS_KEY'],aws_secret_access_key = app.config['S3_SECRET_KEY'])
+
     service = Services
-    service.user_service = UserService(user_dao,app.config)
+    service.user_service = UserService(user_dao,app.config,s3_client)
     service.tweet_service = TweetService(tweet_dao)
 
     ##엔드포인트들 생성
